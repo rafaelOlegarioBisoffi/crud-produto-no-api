@@ -12,31 +12,33 @@ import spark.Filter;
 
 public class ApiProduto {
 
-    //instâncias do DAO e GSON
+    // instâncias do DAO e GSON
     private static final ProdutoDAO dao = new ProdutoDAO();
     private static final Gson gson = new Gson();
-    
-    //Constante para garantir que as respostas sejão json
+
+    // constante para garantir que as respostas sejam JSON
     private static final String APPLICATION_JSON = "application/json";
 
     public static void main(String[] args) {
+        // configura a porta do serviço
         port(1111);
 
-        after(new Filter(){
+        // filtro para definir o tipo de conteúdo como JSON
+        after(new Filter() {
             @Override
-            public void handle(Request request, Response response) throws Exception {
+            public void handle(Request request, Response response) {
                 response.type(APPLICATION_JSON);
-
             }
         });
-        
-        get("/produtos", new Route(){
-            
-        
 
+        // GET /produtos - Buscar todos
+        get("/produtos", new Route() {
             @Override
-            public Object handle(Request request, Response response) throws Exception {
+            public Object handle(Request request, Response response) {
                 return gson.toJson(dao.buscarTodos());
-            }});
+            }
+        });
+
     }
+
 }

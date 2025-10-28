@@ -8,18 +8,18 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
-import model.Produto;
+import model.Categoria;
 import util.ConnectionFactory;
 
-public class ProdutoDAO {
+public class CategoriaDAO {
     // ------------------------------------
     // READ
     // ------------------------------------
 
-    public List<Produto> buscarTodos() {
-        List<Produto> produtos = new ArrayList<>();
+    public List<Categoria> buscarTodos() {
+        List<Categoria> categorias = new ArrayList<>();
         // query SQL para selecionar todos os campos
-        String sql = "SELECT * FROM produtos";
+        String sql = "SELECT * FROM categorias";
         // o bloco try-with-resources garante que Connection, PreparedStatement e
         // ResultSet
         // serão fechados automaticamente, mesmo que ocorram exceções
@@ -29,31 +29,28 @@ public class ProdutoDAO {
 
             // itera sobre cada linha retornada pelo banco
             while (rs.next()) {
-                // cria um novo objeto Produto a partir dos dados da linha atual do ResultSet
-                Produto produto = new Produto(
+                // cria um novo objeto Categoria a partir dos dados da linha atual do ResultSet
+                Categoria categoria = new Categoria(
                         rs.getLong("id"),
-                        rs.getString("nome"),
-                        rs.getDouble("preco"),
-                        rs.getInt("estoque"),
-                        rs.getLong("categoria_id"));
-                produtos.add(produto);
+                        rs.getString("nome"));
+                categorias.add(categoria);
             }
         } catch (SQLException e) {
-            System.err.println("Erro ao buscar produtos: " + e.getMessage());
+            System.err.println("Erro ao buscar categorias: " + e.getMessage());
             e.printStackTrace();
         }
-        return produtos;
+        return categorias;
     }
 
     // ------------------------------------
     // READ BY ID
     // ------------------------------------
-    public Produto buscarPorId(Long id) {
+    public Categoria buscarPorId(Long id) {
 
-        Produto produto = null;
+        Categoria categoria = null;
 
         // o '?' é um placeholder que será preenchido pelo PreparedStatement
-        String sql = "SELECT id, nome, preco, estoque, categoria_id FROM produtos WHERE id = ?";
+        String sql = "SELECT id, nome FROM categorias WHERE id = ?";
 
         try (Connection conn = ConnectionFactory.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -64,74 +61,59 @@ public class ProdutoDAO {
             try (ResultSet rs = stmt.executeQuery()) {
                 // se houver resultado, move o cursor e mapeia o objeto
                 if (rs.next()) {
-                    produto = new Produto(
+                    categoria = new Categoria(
                             rs.getLong("id"),
-                            rs.getString("nome"),
-                            rs.getDouble("preco"),
-                            rs.getInt("estoque"),
-                            rs.getLong("categoria_id"));
+                            rs.getString("nome"));
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Erro ao buscar produto por ID: " + id + ". Detalhes: " + e.getMessage());
+            System.err.println("Erro ao buscar categoria por ID: " + id + ". Detalhes: " + e.getMessage());
             e.printStackTrace();
         }
-        return produto;
+        return categoria;
     }
 
-    public List<Produto> buscarPorCategoria(Long id) {
+    public Categoria buscarPorNome(String nome) {
 
-        List<Produto> produtos = new ArrayList<>();
+        Categoria categoria = null;
 
         // o '?' é um placeholder que será preenchido pelo PreparedStatement
-        String sql = "SELECT id, nome, preco, estoque, categoria_id FROM produtos WHERE categoria_id = ?";
+        String sql = "SELECT id, nome FROM categorias WHERE nome = ? ";
 
         try (Connection conn = ConnectionFactory.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             // define o valor do parâmetro (o '?' na posição 1)
-            stmt.setLong(1, id);
+            stmt.setString(1, nome);
 
             try (ResultSet rs = stmt.executeQuery()) {
                 // se houver resultado, move o cursor e mapeia o objeto
-                while (rs.next()) {
-                    // cria um novo objeto Produto a partir dos dados da linha atual do ResultSet
-                    Produto produto = new Produto(
+                if (rs.next()) {
+                    categoria = new Categoria(
                             rs.getLong("id"),
-                            rs.getString("nome"),
-                            rs.getDouble("preco"),
-                            rs.getInt("estoque"),
-                            rs.getLong("categoria_id"));
-                    produtos.add(produto);
+                            rs.getString("nome"));
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Erro ao buscar produto por ID: " + id + ". Detalhes: " + e.getMessage());
+            System.err.println("Erro ao buscar categoria por nome: " + nome + ". Detalhes: " + e.getMessage());
             e.printStackTrace();
         }
-        return produtos;
+        return categoria;
     }
 
     // ------------------------------------
     // CREATE
     // ------------------------------------
-    public void inserir(Produto produto) {
+    public void inserir(Categoria categoria) {
 
         // usa Statement.RETURN_GENERATED_KEYS para solicitar o ID gerado
-        String sql = "INSERT INTO produtos (nome, preco, estoque, categoria_id) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO categorias (nome) VALUES (?)";
 
         try (Connection conn = ConnectionFactory.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             // define os parâmetros da query
-            stmt.setString(1, produto.getNome());
-            stmt.setDouble(2, produto.getPreco());
-            stmt.setInt(3, produto.getEstoque());
-            if (produto.getcategoriaId() != null) {
-                stmt.setLong(4, produto.getcategoriaId());
-            } else {
-                stmt.setNull(4, java.sql.Types.BIGINT);
-            }
+            stmt.setString(1, categoria.getNome());
 
             // executa a inserção
             stmt.executeUpdate();
@@ -139,13 +121,13 @@ public class ProdutoDAO {
             // recupera a chave gerada (o novo ID)
             try (ResultSet rs = stmt.getGeneratedKeys()) {
                 if (rs.next()) {
-                    // define o ID no objeto Produto que foi passado (importante para a API)
-                    produto.setId(rs.getLong(1));
+                    // define o ID no objeto Categoria que foi passado (importante para a API)
+                    categoria.setId(rs.getLong(1));
                 }
             }
 
         } catch (SQLException e) {
-            System.err.println("Erro ao inserir produto: " + produto.getNome() + ". Detalhes: " + e.getMessage());
+            System.err.println("Erro ao inserir categoria: " + categoria.getNome() + ". Detalhes: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -153,29 +135,26 @@ public class ProdutoDAO {
     // ------------------------------------
     // UPDATE
     // ------------------------------------
-    public void atualizar(Produto produto) {
+    public void atualizar(Categoria categoria) {
 
         // a atualização precisa do ID no WHERE e dos novos valores
-        String sql = "UPDATE produtos SET nome = ?, preco = ?, estoque = ?, categoria_id = ? WHERE id = ?";
+        String sql = "UPDATE categorias SET nome = ? WHERE id = ?";
 
         try (Connection conn = ConnectionFactory.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             // define os parâmetros (os novos valores)
-            stmt.setString(1, produto.getNome());
-            stmt.setDouble(2, produto.getPreco());
-            stmt.setInt(3, produto.getEstoque());
-            stmt.setLong(5, produto.getcategoriaId());
+            stmt.setString(1, categoria.getNome());
 
             // define o ID no WHERE (o último '?')
-            stmt.setLong(5, produto.getId());
+            stmt.setLong(5, categoria.getId());
 
             // executa a atualização
             int linhasAfetadas = stmt.executeUpdate();
-            System.out.println("Produto ID " + produto.getId() + " atualizado. Linhas afetadas: " + linhasAfetadas);
+            System.out.println("Categoria ID " + categoria.getId() + " atualizado. Linhas afetadas: " + linhasAfetadas);
 
         } catch (SQLException e) {
-            System.err.println("Erro ao atualizar produto ID: " + produto.getId() + ". Detalhes: " + e.getMessage());
+            System.err.println("Erro ao atualizar categoria ID: " + categoria.getId() + ". Detalhes: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -186,21 +165,22 @@ public class ProdutoDAO {
     public void deletar(Long id) {
 
         // a exclusão precisa do ID no WHERE
-        String sql = "DELETE FROM produtos WHERE id = ?";
+        String sql = "DELETE FROM categorias WHERE id = ?";
 
         try (Connection conn = ConnectionFactory.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            // define o ID do produto a ser deletado
+            // define o ID do categoria a ser deletado
             stmt.setLong(1, id);
 
             // executa a exclusão
             int linhasAfetadas = stmt.executeUpdate();
-            System.out.println("Tentativa de deletar Produto ID " + id + ". Linhas afetadas: " + linhasAfetadas);
+            System.out.println("Tentativa de deletar Categoria ID " + id + ". Linhas afetadas: " + linhasAfetadas);
 
         } catch (SQLException e) {
-            System.err.println("Erro ao deletar produto ID: " + id + ". Detalhes: " + e.getMessage());
+            System.err.println("Erro ao deletar categoria ID: " + id + ". Detalhes: " + e.getMessage());
             e.printStackTrace();
         }
     }
 }
+

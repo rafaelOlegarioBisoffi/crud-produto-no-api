@@ -7,6 +7,7 @@ public class Produto {
     private String nome;
     private double preco;
     private int estoque;
+    private Long categoria_id;
 
     // contrutor vazio (necessário para frameworks como Gson)
     public Produto() {
@@ -18,6 +19,14 @@ public class Produto {
         this.nome = nome;
         this.preco = preco;
         this.estoque = estoque;
+    }
+
+     public Produto(Long id, String nome, double preco, int estoque, Long categoria_id) {
+        this.id = id;
+        this.nome = nome;
+        this.preco = preco;
+        this.estoque = estoque;
+        this.categoria_id = categoria_id;
     }
 
     // construtor sem o id (para inserções, onde o id é auto-gerado)
@@ -34,6 +43,14 @@ public class Produto {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Long getcategoriaId() {
+        return categoria_id;
+    }
+
+    public void setcategoriaId(Long id) {
+        this.categoria_id = id;
     }
 
     public String getNome() {
